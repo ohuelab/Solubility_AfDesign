@@ -25,6 +25,8 @@ from matplotlib import animation
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 
+from constant import SWI_norm, Hyd_norm, Hyp_norm
+
 class mk_design_model:
   ######################################
   # model initialization
@@ -32,7 +34,7 @@ class mk_design_model:
   def __init__(self, num_seq=1, protocol="fixbb",
                num_models=1, model_mode="sample", model_parallel=False,
                num_recycles=0, recycle_mode="sample",
-               use_templates=None):
+               use_templates=None, solubility_index=None):
     
     # decide if templates should be used
     if use_templates is None:
@@ -112,6 +114,17 @@ class mk_design_model:
     if protocol == "hallucination":  self.prep_inputs = self._prep_hallucination
     if protocol == "binder":         self.prep_inputs = self._prep_binder
 
+    # solubility index
+    self.solubility_index = solubility_index
+    if solubility_index == "swi":
+      self.solubility_weight = jnp.array(SWI_norm)
+    if solubility_index == "hyd":
+      self.solubility_weight = jnp.array(Hyd_norm)
+    if solubility_index == "hyp":
+      self.solubility_weight = jnp.array(Hyp_norm)      
+    print(self.solubility_index)
+    print(self.solubility_weight)
+
   ######################################
   # setup gradient
   ######################################
@@ -137,6 +150,10 @@ class mk_design_model:
       seq_soft = jax.nn.softmax(seq / opt["temp"])
       seq_hard = jax.nn.one_hot(seq_soft.argmax(-1),20)
       seq_hard = jax.lax.stop_gradient(seq_hard - seq_soft) + seq_soft
+      # solubility loss
+      if self.solubility_index != None:
+        solubility_loss = (seq_hard * self.solubility_weight).sum() / self._binder_len
+        losses.update({"solubility": solubility_loss})
 
       # create pseudo sequence
       seq_pseudo = opt["soft"] * seq_soft + (1-opt["soft"]) * seq_logits
@@ -331,7 +348,8 @@ class mk_design_model:
 
     self._default_weights = {"msa_ent":0.01,"plddt":0.1,
                              "pae_intra":0.1,"pae_inter":1.0,
-                             "con_intra":0.1,"con_inter":0.5}
+                             "con_intra":0.1,"con_inter":0.5,
+                             "solubility":0.5}
     self.restart(**kwargs)
 
   def _prep_fixbb(self, pdb_filename, chain=None, **kwargs):
@@ -402,6 +420,7 @@ class mk_design_model:
     
     # initialize sequence
     if seed is None: seed = np.random.randint(100000)
+    self._seed = seed
     self._key = jax.random.PRNGKey(seed)
     self._init_seq(seq_init)
 
@@ -480,7 +499,7 @@ class mk_design_model:
       I = ["model","recycles"]
       F = ["soft","temp","loss","seqid","msa_ent",
            "pae","pae_intra","pae_inter","plddt",
-           "con","con_intra","con_inter","dgram_cce","fape","rmsd"]
+           "con","con_intra","con_inter","dgram_cce","fape","rmsd", "solubility"]
       I = " ".join([f"{x}: {self._losses[x]}" for x in I if x in self._losses])
       F = " ".join([f"{x}: {self._losses[x]:.3f}" for x in F if x in self._losses])
       print(f"{self._k}\t{I} {F}")
@@ -554,7 +573,7 @@ class mk_design_model:
   ######################################
   def get_seqs(self):
     outs = self._outs if self._best_outs is None else self._best_outs
-    x = outs["seq"].argmax(-1)
+    x = np.array(outs["seq"].argmax(-1))
     return ["".join([order_restype[a] for a in s]) for s in x]
   
   def get_loss(self, x="loss"):
@@ -580,6 +599,29 @@ class mk_design_model:
     if filename is None: return pdb_lines
     else:
       with open(filename, 'w') as f: f.write(pdb_lines)
+
+  def save_pdb_sep(self, filename=None):
+    '''save pdb coordinates'''
+    outs = self._outs if self._best_outs is None else self._best_outs
+    aatype_target = self._batch["aatype"][:self._target_len]
+    aatype_binder = outs["seq"].argmax(-1)[0]
+    p_t = {"residue_index":self._inputs["residue_index"][0][:self._target_len],
+        "aatype":aatype_target,
+        "atom_positions":outs["final_atom_positions"][:self._target_len],
+        "atom_mask":outs["final_atom_mask"][:self._target_len]}
+    p_b = {"residue_index":self._inputs["residue_index"][0][self._target_len:],
+        "aatype":aatype_binder,
+        "atom_positions":outs["final_atom_positions"][self._target_len:],
+        "atom_mask":outs["final_atom_mask"][self._target_len:]}
+    b_factors_t = outs["plddt"][:self._target_len:,None] * p_t["atom_mask"]
+    b_factors_b = outs["plddt"][self._target_len:,None] * p_b["atom_mask"]
+    p_t = protein.Protein(**p_t,b_factors=b_factors_t)
+    p_b = protein.Protein(**p_b,b_factors=b_factors_b)
+    for p, prefix in zip([p_t, p_b], ["rec", "pep"]):
+      pdb_lines = protein.to_pdb(p)
+      if filename is None: return pdb_lines
+      else:
+        with open(f"{filename}_{prefix}.pdb", 'w') as f: f.write(pdb_lines)
   
   ######################################
   # plotting functions
@@ -740,4 +782,4 @@ def make_animation(xyz, seq, plddt=None, pae=None,
   # make animation!
   ani = animation.ArtistAnimation(fig, ims, blit=True, interval=interval)
   plt.close()
-  return ani.to_html5_video()
+  return ani

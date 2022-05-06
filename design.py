@@ -122,8 +122,6 @@ class mk_design_model:
       self.solubility_weight = jnp.array(Hyd_norm)
     if solubility_index == "hyp":
       self.solubility_weight = jnp.array(Hyp_norm)      
-    print(self.solubility_index)
-    print(self.solubility_weight)
 
   ######################################
   # setup gradient

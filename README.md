@@ -19,6 +19,7 @@ wget -qnc https://raw.githubusercontent.com/blacktanktop/Solubility_AfDesign/sol
 import numpy as np
 from IPython.display import HTML
 from design import mk_design_model, clear_mem
+from design_util import *
 import sys
 sys.path.append('af_backprop')
 ```

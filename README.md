@@ -1,4 +1,8 @@
 # Solubilty-aware AfDesign
+
+This repository is based on the AfDesign binder hallucination protocol in ColabDesign, which is published by Dr. Sergey Ovchinnikov on [GitHub](https://github.com/sokrypton/ColabDesign/tree/main/af).
+
+
 ### Google Colab
 <a href="https://colab.research.google.com/github/blacktanktop/Solubility_AfDesign/blob/main/design.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>

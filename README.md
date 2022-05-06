@@ -1,6 +1,6 @@
-# AfDesign
+# Solubilty-aware AfDesign
 ### Google Colab
-<a href="https://colab.research.google.com/github/sokrypton/ColabDesign/blob/main/af/design.ipynb">
+<a href="https://colab.research.google.com/github/blacktanktop/Solubility_AfDesign/blob/main/design.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
 
@@ -11,7 +11,9 @@ pip -q install biopython dm-haiku==0.0.5 ml-collections py3Dmol
 mkdir params
 curl -fsSL https://storage.googleapis.com/alphafold/alphafold_params_2021-07-14.tar | tar x -C params
 wget -qnc https://raw.githubusercontent.com/sokrypton/ColabFold/main/beta/colabfold.py
-wget -qnc https://raw.githubusercontent.com/sokrypton/ColabDesign/main/af/design.py
+wget -qnc https://raw.githubusercontent.com/blacktanktop/Solubility_AfDesign/main/design.py
+wget -qnc https://raw.githubusercontent.com/blacktanktop/Solubility_AfDesign/solubility/design_util.py
+wget -qnc https://raw.githubusercontent.com/blacktanktop/Solubility_AfDesign/solubility/constant.py
 ```
 ```python
 import numpy as np
@@ -20,28 +22,13 @@ from design import mk_design_model, clear_mem
 import sys
 sys.path.append('af_backprop')
 ```
-### fixed backbone design
-For a given protein backbone, generate/design a new sequence that AlphaFold thinks folds into that conformation
-```python
-model = mk_design_model(protocol="fixbb")
-model.prep_inputs(pdb_filename="1TEN.pdb", chain="A")
-model.design_3stage()
-```
-### hallucination
-For a given length, generate/hallucinate a protein sequence that AlphaFold thinks folds into a well structured 
-protein (high plddt, low pae, many contacts).
-```python
-model = mk_design_model(protocol="hallucination")
-model.prep_inputs(length=100, seq_init="gumbel")
-model.design_2stage()
-```
 ### binder hallucination
 For a given protein target and protein binder length, generate/hallucinate a protein binder sequence AlphaFold 
 thinks will bind to the target structure. To do this, we minimize PAE and maximize number of contacts at the 
 interface and within the binder, and we maximize pLDDT of the binder.
 ```python
 model = mk_design_model(protocol="binder")
-model.prep_inputs(pdb_filename="4MZK.pdb", chain="A", binder_len=19)
+model.prep_inputs(pdb_filename="1YCR.pdb", chain="A", binder_len=13)
 model.design_3stage(soft_iters=100, temp_iters=100, hard_iters=10)
 ```
 # FAQ
@@ -65,15 +52,6 @@ To get around this problem, we propose optimizing in 2 or 3 stages.
   - `plddt`     - maximizes the predicted LDDT
   - `msa_ent`   - minimize entropy for MSA design (see example at the end of notebook)
   - `pae` and `plddt` values are between 0 and 1 (where lower is better for both)
-
-- fixbb specific losses
-  - `dgram_cce` - minimizes the categorical-crossentropy between predicted distogram and one extracted from pdb.
-  - `fape`      - minimize difference between coordinates (see AlphaFold paper)
-  - we find `dgram_cce` loss to be more stable for design (compared to `fape`)
-
-- hallucination specific losses
-  - `con`       - maximize number of contacts. (We find just minimizing `plddt` results in single long helix, 
-and maximizing `pae` results in a two helix bundle. To encourage compact structures we add a `con` term)
 
 - binder specific losses
   - `pae_inter` - minimize PAE interface of the proteins
@@ -125,7 +103,5 @@ model.prep_inputs(...,hotspot="1-10,15,3")
 ```
 #### How do I set the random seed for reproducibility?
 ```python
-model.prep_inputs(...,seed=0)
-# or
 model.restart(seed=0)
 ```

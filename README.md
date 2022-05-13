@@ -4,7 +4,7 @@ This repository is based on the AfDesign binder hallucination protocol in ColabD
 
 
 ### Google Colab
-<a href="https://colab.research.google.com/github/blacktanktop/Solubility_AfDesign/blob/main/design.ipynb">
+<a href="https://colab.research.google.com/github/ohuelab/Solubility_AfDesign/blob/solubility/design.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
 

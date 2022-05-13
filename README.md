@@ -110,3 +110,6 @@ model.prep_inputs(...,hotspot="1-10,15,3")
 ```python
 model.restart(seed=0)
 ```
+
+## References
+Kosugi T, Ohue M. __Solubility-aware protein binding peptide design using AlphaFold__. (under review)

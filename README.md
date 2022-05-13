@@ -112,4 +112,4 @@ model.restart(seed=0)
 ```
 
 ## References
-- Kosugi T, Ohue M. __Solubility-aware protein binding peptide design using AlphaFold__. (under review)
+Kosugi T, Ohue M. __Solubility-aware protein binding peptide design using AlphaFold__. (under review)

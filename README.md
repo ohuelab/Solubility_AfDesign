@@ -15,9 +15,9 @@ pip -q install biopython dm-haiku==0.0.5 ml-collections py3Dmol
 mkdir params
 curl -fsSL https://storage.googleapis.com/alphafold/alphafold_params_2021-07-14.tar | tar x -C params
 wget -qnc https://raw.githubusercontent.com/sokrypton/ColabFold/main/beta/colabfold.py
-wget -qnc https://raw.githubusercontent.com/blacktanktop/Solubility_AfDesign/main/design.py
-wget -qnc https://raw.githubusercontent.com/blacktanktop/Solubility_AfDesign/solubility/design_util.py
-wget -qnc https://raw.githubusercontent.com/blacktanktop/Solubility_AfDesign/solubility/constant.py
+wget -qnc https://raw.githubusercontent.com/ohuelab/Solubility_AfDesign/main/design.py
+wget -qnc https://raw.githubusercontent.com/ohuelab/Solubility_AfDesign/solubility/design_util.py
+wget -qnc https://raw.githubusercontent.com/ohuelab/Solubility_AfDesign/solubility/constant.py
 ```
 ```python
 import numpy as np

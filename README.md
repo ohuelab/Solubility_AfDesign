@@ -27,7 +27,27 @@ from design_util import *
 import sys
 sys.path.append('af_backprop')
 ```
-### binder hallucination
+
+### About Solubility index
+Three solubility indices, the Hydrophobicity Index, Hydropathy Index, and Solubility-Weighted Index, were used in this study. 
+* The Hydrophobicity Index evaluates hydrophobicity based on the physical characteristics of 20 amino acids to identify regions of a protein's primary sequence that are likely to be buried in the membrane. 
+(Argos, P.; Rao, J.K.M.; Hargrave, P.A. Structural Prediction of Membrane-Bound Proteins. Eur. J. Biochem. 1982, 128, 565--575, doi:10.1111/j.1432-1033.1982.tb07002.x.)
+* The Hydropathy Index is a hydrophilicity scale that considers the hydrophilicity and hydrophobicity of each of the 20 amino acid side chains and was developed based on experimental observations from the literature. Specifically, values were calculated using both the water vapor transfer free energy and the distribution in and out of the amino acid side chains as determined by Chothia (1976).
+(Kyte, J.; Doolittle, R.F. A Simple Method for Displaying the Hydropathic Character of a Protein. J. Mol. Bio. 1982, 157, 105--132, doi:10.1016/0022-2836(82)90515-0.)
+* The Solubility-Weighted Index is a predictive index of solubility, and prediction programs using it are superior to many existing de novo protein solubility prediction tools~\cite{index:SWI}. In this study, the weight of this predictive index was used as the solubility index. 
+(Bhandari, B.K.; Gardner, P.P.; Lim, C.S. Solubility-Weighted Index: Fast and Accurate Prediction of Protein Solubility. Bioinformatics 2020, 36, 4691--4698, doi:10.1093/bioinformatics/btaa578.)
+
+### binder hallucination with Solubility index
+```python
+# solubility_index choose from swi (means Solubility-Weighted Index), hyp (means Hydropathy Index) and hyd (means Hydrophobicity Index)
+model = mk_design_model(protocol="binder", solubility_index="swi") 
+model.prep_inputs(pdb_filename="1YCR.pdb", chain="A", binder_len=13)
+# Specify weights for solubility index. In the paper, we considered between 0~1. However, 0 means that the solubility index is not used.
+model.opt["weights"].update({"solubility": 0.5})
+model.design_3stage(soft_iters=100, temp_iters=100, hard_iters=10)
+```
+
+### binder hallucination (Default)
 For a given protein target and protein binder length, generate/hallucinate a protein binder sequence AlphaFold 
 thinks will bind to the target structure. To do this, we minimize PAE and maximize number of contacts at the 
 interface and within the binder, and we maximize pLDDT of the binder.
